@@ -12,6 +12,7 @@ import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.asDeferred
 import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
@@ -55,17 +56,30 @@ class RegisterActivity : AppCompatActivity() {
             }
 
             // cara 2
-            CoroutineScope(Dispatchers.Main).launch {
-                val isRegistered = checkUser(etEmail.text.toString())
-                if (isRegistered) {
-                    Toast.makeText(
-                        applicationContext,
-                        "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    this@RegisterActivity.registerUser(userModel)
+            CoroutineScope(Dispatchers.IO).launch {
+                try {
+                    val isRegistered = checkUser(etEmail.text.toString())
+                    runOnUiThread {
+                        if (isRegistered) {
+                            Toast.makeText(
+                                applicationContext,
+                                "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        } else {
+                            this@RegisterActivity.registerUser(userModel)
+                        }
+                    }
+                } catch (e: Exception) {
+                    runOnUiThread {
+                        Toast.makeText(
+                            applicationContext,
+                            "Terjadi kesalahan",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
+
             }
         }
 
@@ -93,24 +107,11 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     suspend fun checkUser(email: String): Boolean {
-        return suspendCoroutine { continuation ->
-            val db = Firebase.firestore
-            db.collection("users").whereEqualTo("email", email)
-                .get()
-                .addOnSuccessListener { documents ->
-                    if (!documents.isEmpty) {
-                        // doc exist
-                        continuation.resume(true)
-                    } else {
-                        // doc doesn't exist
-                        continuation.resume(false)
-                    }
-                }
-                .addOnFailureListener { exception ->
-                    continuation.resume(false)
-                    Log.w(TAG, "Error getting documents: ", exception)
-                }
-        }
+        val db = Firebase.firestore
+        val result = db.collection("users").whereEqualTo("email", email)
+            .get()
+            .asDeferred().await()
+        return result.documents.isNotEmpty()
     }
 
     fun registerUser(userModel: UserModel) {
