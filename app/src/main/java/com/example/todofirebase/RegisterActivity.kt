@@ -18,7 +18,6 @@ class RegisterActivity : AppCompatActivity() {
     lateinit var etPassword : EditText
     lateinit var etPasswordConfirmation : EditText
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_register)
@@ -36,40 +35,48 @@ class RegisterActivity : AppCompatActivity() {
                 Password = PasswordHelper.md5(etPassword.text.toString())
             )
 
-            var isRegistered = this.checkUser(etEmail.text.toString())
+            checkUser(etEmail.text.toString()) { isSuccess, isRegistered ->
+                if (!isSuccess) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Terjadi kesalahan",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@checkUser
+                } else if (isRegistered) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                    return@checkUser
+                }
 
-            if (isRegistered) {
-                Toast.makeText(
-                    applicationContext,
-                    "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
+                this.registerUser(userModel)
             }
-
-            this.registerUser(userModel)
         }
-
-
     }
 
-    fun checkUser(email: String): Boolean {
-        var registered = false
+
+
+    private fun checkUser(email: String, checkResult: (isSuccess: Boolean, isRegistered: Boolean) -> Unit) {
         val db = Firebase.firestore
-        db.collection("users").whereEqualTo("email", "hudya@mail.com")
+        db.collection("users").whereEqualTo("email", email)
             .get()
             .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    Log.d(TAG, "${document.id} => ${document.data}")
+
+                var isSuccess = true
+                var isRegistered = false
+
+                if (!documents.isEmpty) {
+                    isRegistered = true
                 }
-                registered = true
-                return@addOnSuccessListener
+                checkResult.invoke(isSuccess, isRegistered)
             }
             .addOnFailureListener { exception ->
+                checkResult.invoke(false, false)
                 Log.w(TAG, "Error getting documents: ", exception)
             }
-
-        return registered
     }
 
     fun registerUser(userModel: UserModel) {
@@ -83,7 +90,7 @@ class RegisterActivity : AppCompatActivity() {
                     Toast.LENGTH_SHORT
                 ).show()
 
-//                finish()
+                finish()
             }
             .addOnFailureListener { e ->
                 Log.w(TAG, "Error adding document", e)

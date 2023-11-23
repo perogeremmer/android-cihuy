@@ -22,9 +22,9 @@ class CreateTodoActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_create_todo)
 
-        etTitle = findViewById(R.id.et_email)
-        etDescription = findViewById(R.id.et_password)
-        btnSubmit = findViewById(R.id.btn_login)
+        etTitle = findViewById(R.id.et_title)
+        etDescription = findViewById(R.id.et_description)
+        btnSubmit = findViewById(R.id.btn_submit)
         labelHeader = findViewById(R.id.label_header)
 
         var editMode = false
