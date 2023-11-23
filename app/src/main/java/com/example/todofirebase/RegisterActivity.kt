@@ -79,7 +79,6 @@ class RegisterActivity : AppCompatActivity() {
                         ).show()
                     }
                 }
-
             }
         }
 
@@ -106,7 +105,7 @@ class RegisterActivity : AppCompatActivity() {
             }
     }
 
-    suspend fun checkUser(email: String): Boolean {
+    private suspend fun checkUser(email: String): Boolean {
         val db = Firebase.firestore
         val result = db.collection("users").whereEqualTo("email", email)
             .get()
