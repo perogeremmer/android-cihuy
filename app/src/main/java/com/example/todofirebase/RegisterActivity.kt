@@ -85,7 +85,7 @@ class RegisterActivity : AppCompatActivity() {
 
     }
 
-    fun checkUser(email: String, checkResult: (Boolean) -> Unit) {
+    private fun checkUser(email: String, checkResult: (Boolean) -> Unit) {
         val db = Firebase.firestore
         db.collection("users").whereEqualTo("email", email)
             .get()
@@ -113,7 +113,7 @@ class RegisterActivity : AppCompatActivity() {
         return result.documents.isNotEmpty()
     }
 
-    fun registerUser(userModel: UserModel) {
+    private fun registerUser(userModel: UserModel) {
         val db = Firebase.firestore
         db.collection("users")
             .add(userModel)
