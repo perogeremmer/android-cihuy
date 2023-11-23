@@ -9,6 +9,11 @@ import android.widget.EditText
 import android.widget.Toast
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlin.coroutines.resume
+import kotlin.coroutines.suspendCoroutine
 
 class RegisterActivity : AppCompatActivity() {
 
@@ -36,40 +41,76 @@ class RegisterActivity : AppCompatActivity() {
                 Password = PasswordHelper.md5(etPassword.text.toString())
             )
 
-            var isRegistered = this.checkUser(etEmail.text.toString())
-
-            if (isRegistered) {
-                Toast.makeText(
-                    applicationContext,
-                    "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
-                    Toast.LENGTH_SHORT
-                ).show()
-                return@setOnClickListener
+            // cara 1
+            checkUser(etEmail.text.toString()) {
+                if (it) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    this.registerUser(userModel)
+                }
             }
 
-            this.registerUser(userModel)
+            // cara 2
+            CoroutineScope(Dispatchers.Main).launch {
+                val isRegistered = checkUser(etEmail.text.toString())
+                if (isRegistered) {
+                    Toast.makeText(
+                        applicationContext,
+                        "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    this@RegisterActivity.registerUser(userModel)
+                }
+            }
         }
 
 
     }
 
-    fun checkUser(email: String): Boolean {
-        var registered = false
+    fun checkUser(email: String, checkResult: (Boolean) -> Unit) {
         val db = Firebase.firestore
-        db.collection("users").whereEqualTo("email", "hudya@mail.com")
+        db.collection("users").whereEqualTo("email", email)
             .get()
             .addOnSuccessListener { documents ->
-                for (document in documents) {
-                    Log.d(TAG, "${document.id} => ${document.data}")
+                if (!documents.isEmpty) {
+                    // doc exist
+                    checkResult.invoke(true)
+                } else {
+                    // doc doesn't exist
+                    checkResult.invoke(false)
                 }
-                registered = true
-                return@addOnSuccessListener
             }
             .addOnFailureListener { exception ->
+                // fail
+                checkResult.invoke(false)
                 Log.w(TAG, "Error getting documents: ", exception)
             }
+    }
 
-        return registered
+    suspend fun checkUser(email: String): Boolean {
+        return suspendCoroutine { continuation ->
+            val db = Firebase.firestore
+            db.collection("users").whereEqualTo("email", email)
+                .get()
+                .addOnSuccessListener { documents ->
+                    if (!documents.isEmpty) {
+                        // doc exist
+                        continuation.resume(true)
+                    } else {
+                        // doc doesn't exist
+                        continuation.resume(false)
+                    }
+                }
+                .addOnFailureListener { exception ->
+                    continuation.resume(false)
+                    Log.w(TAG, "Error getting documents: ", exception)
+                }
+        }
     }
 
     fun registerUser(userModel: UserModel) {
