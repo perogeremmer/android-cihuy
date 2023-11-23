@@ -43,15 +43,23 @@ class RegisterActivity : AppCompatActivity() {
             )
 
             // cara 1
-            checkUser(etEmail.text.toString()) {
-                if (it) {
+            checkUser(etEmail.text.toString()) { isSuccess, isRegistered ->
+                if (isSuccess) {
+                    if (isRegistered) {
+                        Toast.makeText(
+                            applicationContext,
+                            "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    } else {
+                        this.registerUser(userModel)
+                    }
+                } else {
                     Toast.makeText(
                         applicationContext,
-                        "Akun dengan email ${etEmail.text.toString()} sudah terdaftar!",
+                        "Terjadi kesalahan",
                         Toast.LENGTH_SHORT
                     ).show()
-                } else {
-                    this.registerUser(userModel)
                 }
             }
 
@@ -85,22 +93,22 @@ class RegisterActivity : AppCompatActivity() {
 
     }
 
-    private fun checkUser(email: String, checkResult: (Boolean) -> Unit) {
+    private fun checkUser(email: String, checkResult: (isSuccess: Boolean, isRegistered: Boolean) -> Unit) {
         val db = Firebase.firestore
         db.collection("users").whereEqualTo("email", email)
             .get()
             .addOnSuccessListener { documents ->
                 if (!documents.isEmpty) {
                     // doc exist
-                    checkResult.invoke(true)
+                    checkResult.invoke(true, true)
                 } else {
                     // doc doesn't exist
-                    checkResult.invoke(false)
+                    checkResult.invoke(true, false)
                 }
             }
             .addOnFailureListener { exception ->
                 // fail
-                checkResult.invoke(false)
+                checkResult.invoke(false, false)
                 Log.w(TAG, "Error getting documents: ", exception)
             }
     }
