@@ -1,11 +1,9 @@
 package com.example.todofirebase
 
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -13,17 +11,29 @@ import android.widget.Toast
 import com.google.firebase.firestore.ktx.firestore
 import com.google.firebase.ktx.Firebase
 
-class   LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity() {
 
     lateinit var btnLogin : Button
     lateinit var etEmail : EditText
     lateinit var etPassword : EditText
-
     lateinit var txtRegister : TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
+
+        val sharedPreference =  getSharedPreferences(
+            "app_preference", Context.MODE_PRIVATE
+        )
+
+        var id = sharedPreference.getString("id", "").toString()
+
+        if (!id.isNullOrBlank()) {
+            val intent = Intent(this, MainActivity::class.java)
+            startActivity(intent)
+            finish()
+        }
+
 
         btnLogin = findViewById(R.id.btn_login)
         etEmail = findViewById(R.id.et_email)
@@ -49,10 +59,9 @@ class   LoginActivity : AppCompatActivity() {
 
                 val intent = Intent(this, MainActivity::class.java)
                 startActivity(intent)
+                finish()
             }
         }
-
-
     }
 
     private fun auth(email: String, password: String, checkResult: (isValid: Boolean) -> Unit) {
@@ -85,5 +94,5 @@ class   LoginActivity : AppCompatActivity() {
                     checkResult.invoke(isValid)
                 }
 
-            }
     }
+}

@@ -57,8 +57,6 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
-
-
     private fun checkUser(email: String, checkResult: (isSuccess: Boolean, isRegistered: Boolean) -> Unit) {
         val db = Firebase.firestore
         db.collection("users").whereEqualTo("email", email)
