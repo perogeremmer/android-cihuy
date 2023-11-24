@@ -51,7 +51,7 @@ class LoginActivity : AppCompatActivity() {
                 if (!isValid) {
                     Toast.makeText(
                         applicationContext,
-                        "Terjadi kesalahan",
+                        "Username atau password salah!",
                         Toast.LENGTH_SHORT
                     ).show()
                     return@auth
